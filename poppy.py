@@ -1,8 +1,11 @@
 import discord
 from discord.ext import commands
 from random import *
+from settings import Settings
 
-bot = commands.Bot(command_prefix='!', dscription='Poppy is a personalized Discord chat bot for anime, manga, games, and more!')
+"""After more structure has been added, this will be refactored into a class definition"""
+
+bot = commands.Bot(command_prefix='!', description='Poppy is a personalized Discord chat bot for anime, manga, games, and more!')
 
 @bot.event
 async def on_ready():
@@ -28,4 +31,5 @@ async def say(ctx, *, something):
     await bot.say(something)
     await bot.delete_message(ctx.message)
 
-bot.run(TOKEN GOES HERE)
+settings = Settings()
+bot.run(settings.token)
