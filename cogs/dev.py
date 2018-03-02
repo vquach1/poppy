@@ -5,6 +5,7 @@ from discord.ext import commands
    without stopping the bot. However, the bot needs to be taken down whenever this cog is modified.
    Ironic."""
 
+
 class DevCog:
     def __init__(self, bot):
         self.bot = bot
@@ -13,15 +14,22 @@ class DevCog:
     async def cog(self, ctx):
         pass
 
-    @cog.command(name="add", pass_context=True)
+    @cog.command(alias=["add", "load"], pass_context=True)
     async def cog_add(self, ctx, cog):
         self.bot.load_extension("cogs." + cog)
         await self.bot.say(cog + " has been loaded!")
 
-    @cog.command(name="remove", pass_context=True)
+    @cog.command(alias=["remove", "unload"], pass_context=True)
     async def cog_remove(self, ctx, cog):
         self.bot.unload_extension("cogs." + cog)
         await self.bot.say(cog + " has been unloaded!")
+
+    @cog.command(name="reload", pass_context=True)
+    async def cog_reload(self, ctx, cog):
+        self.bot.unload_extension("cogs." + cog)
+        self.bot.load_extension("cogs." + cog)
+        await self.bot.say(cog + " has been reloaded!")
+
 
 def setup(bot):
     bot.add_cog(DevCog(bot))

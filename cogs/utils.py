@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from random import *
 
+
 class UtilsCog:
     def __init__(self, bot):
         self.bot = bot
@@ -25,6 +26,7 @@ class UtilsCog:
     async def say(self, ctx, *, something):
         await self.bot.say(something)
         await self.bot.delete_message(ctx.message)
+
 
 def setup(bot):
     bot.add_cog(UtilsCog(bot))

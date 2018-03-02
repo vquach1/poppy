@@ -1,17 +1,20 @@
 import discord
 from discord.ext import commands
+from checks import *
+
 
 class ManagementCog:
     def __init__(self, bot):
         self.bot = bot
 
+    @is_owner()
     @commands.group(pass_context=True)
     async def role(self, ctx):
         pass
 
     @role.command(name="create", pass_context=True)
     async def role_create(self, ctx, role):
-        await self.bot.create_role(ctx.message.server, name = role, hoist = True)
+        await self.bot.create_role(ctx.message.server, name=role, hoist=True)
         resp = "{} has been created as a role!".format(role)
         await self.bot.say(resp)
 
@@ -32,6 +35,7 @@ class ManagementCog:
         await self.bot.remove_roles(member, role)
         resp = "{} is no longer a proud member of {}".format(member.name, role.name)
         await self.bot.say(resp)
+
 
 def setup(bot):
     bot.add_cog(ManagementCog(bot))

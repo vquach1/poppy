@@ -19,8 +19,12 @@ class Settings:
 
     @property
     def token(self):
-        return self.settings['Token']
+        return self.settings["Token"]
 
-    @token.setter
-    def token(self, value):
-        self.settings['Token'] = value
+    @property
+    def mal_user(self):
+        return self.settings["MyAnimeList"]["User"]
+
+    @property
+    def mal_pass(self):
+        return self.settings["MyAnimeList"]["Pass"]
