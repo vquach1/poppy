@@ -2,8 +2,16 @@ import discord
 from discord.ext import commands
 from errors import *
 from settings import Settings
+from base64 import b64encode
+import urllib
+import requests
+from bs4 import *
+import html
+import re
+
 
 """After more structure has been added, this will be refactored into a class definition"""
+
 bot = commands.Bot(command_prefix='!',
                    description='Poppy is a personalized Discord chat bot for anime, manga, games, and more!')
 
@@ -12,8 +20,8 @@ bot = commands.Bot(command_prefix='!',
 async def on_ready():
     bot.load_extension("cogs.dev")
     bot.load_extension("cogs.management")
-    bot.load_extension("cogs.utils")
-    bot.load_extension("cogs.japanese_media")
+    bot.load_extension("cogs.misc")
+    bot.load_extension("cogs.otaku")
     print("Poppy is online!")
 
 """

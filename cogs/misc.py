@@ -1,15 +1,14 @@
 import discord
 from discord.ext import commands
 from random import *
+import requests
+import urllib
+import json
 
 
 class UtilsCog:
     def __init__(self, bot):
         self.bot = bot
-
-    @commands.command()
-    async def hello(self):
-        await self.bot.say('Hello!')
 
     @commands.command()
     async def ayy(self):
@@ -22,10 +21,13 @@ class UtilsCog:
 
         await self.bot.say('lm' + msgA + msgB + '!')
 
-    @commands.command(pass_context=True)
-    async def say(self, ctx, *, something):
-        await self.bot.say(something)
-        await self.bot.delete_message(ctx.message)
+    @commands.command(name="8ball", pass_context=True)
+    async def ball8(self, ctx, *, msg):
+        msg_encoded = urllib.parse.quote(msg)
+        url = "https://8ball.delegator.com/magic/JSON/" + msg_encoded
+        result = requests.get(url)
+        conv = json.loads(result.text)
+        await self.bot.say(":eye_in_speech_bubble: " + conv["magic"]["answer"])
 
 
 def setup(bot):

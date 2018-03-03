@@ -26,6 +26,9 @@ class DevCog:
 
     @cog.command(name="reload", pass_context=True)
     async def cog_reload(self, ctx, cog):
+        if cog == "anime" or cog == "manga":
+            cog = "japanese_media"
+
         self.bot.unload_extension("cogs." + cog)
         self.bot.load_extension("cogs." + cog)
         await self.bot.say(cog + " has been reloaded!")
