@@ -29,9 +29,7 @@ class AudioPlaylist:
     async def process_playlist(self):
         while True:
             self.next_flag.clear()
-            print("I am in process_playlist")
             self.current = await self.playlist.get()
-            print("Got song")
             await self.bot.send_message(self.current.channel, "Now playing " + str(self.current))
             self.current.player.start()
             await self.next_flag.wait()
@@ -42,16 +40,45 @@ class AudioCog:
         self.bot = bot
         self.audio_playlists = {}
 
+
+    async def _join_channel(self, channel):
+        voice = await self.bot.join_voice_channel(channel)
+        self.audio_playlists[channel.server.id] = AudioPlaylist(self.bot, voice)
+        await self.bot.say("I am now in " + channel.name)
+
     @commands.command(pass_context=True)
     async def join(self, ctx, channel: discord.Channel=None):
         server = ctx.message.server
 
-        voice = await self.bot.join_voice_channel(channel)
-        self.audio_playlists[server.id] = AudioPlaylist(self.bot, voice)
+        if channel is None:
+            channel = ctx.message.author.voice.voice_channel
+
+        if server.id in self.audio_playlists:
+            voice = self.audio_playlists[server.id].voice
+            await voice.move_to(channel)
+            await self.bot.say("I have moved to " + channel.name)
+        else:
+            await self._join_channel(channel)
+
+    @is_in_voice_channel()
+    @commands.command(aliases=["leave"], pass_context=True)
+    async def stop(self, ctx):
+        server = ctx.message.server
+        ap = self.audio_playlists.pop(server.id)
+        channel = ap.voice.channel
+
+        ap.playlist_task.cancel()
+        await ap.voice.disconnect()
+        await self.bot.say("I am no longer in " + channel.name)
 
     @commands.command(pass_context=True)
     async def play(self, ctx, url):
         server = ctx.message.server
+
+        """If bot not in channel, add bot to user's voice channel"""
+        if server.id not in self.audio_playlists:
+            channel = ctx.message.author.voice.voice_channel
+            await self._join_channel(channel)
 
         ap = self.audio_playlists[server.id]
         player = await ap.voice.create_ytdl_player(url, after=ap.play_next)
