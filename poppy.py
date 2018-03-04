@@ -22,6 +22,7 @@ async def on_ready():
     bot.load_extension("cogs.management")
     bot.load_extension("cogs.misc")
     bot.load_extension("cogs.otaku")
+    bot.load_extension("cogs.audio")
     print("Poppy is online!")
 
 """
@@ -31,6 +32,10 @@ async def on_command_error(error, ctx):
 
     if isinstance(error, NotOwner):
         await bot.send_message(channel, "You are not an owner!")
+    elif isinstance(error, NotInVoiceChannel):
+        await bot.send_message(channel, "I am not in a voice channel!")
+    elif isinstance(error, UserNotInVoiceChannel):
+        await bot.send_message(channel, "You are not in a voice channel!")
     else:
         await bot.send_message(channel, "Error unhandled")
 """

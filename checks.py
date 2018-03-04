@@ -8,3 +8,11 @@ def is_owner():
             raise NotOwner()
         return True
     return commands.check(predicate)
+
+
+def is_in_voice_channel():
+    def predicate(ctx):
+        if not ctx.bot.voice_client_in(ctx.message.server):
+            raise NotInVoiceChannel()
+        return True
+    return commands.check(predicate)
