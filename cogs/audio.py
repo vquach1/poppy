@@ -13,8 +13,28 @@ class AudioRequest:
         self.url = url
         self.player = player
 
+
+    """TODO: Make this cut not based on title_len, but based on total length that the string can be. 
+             This should take the user's display name length into account"""
+    def _str_help(self, title_len=None):
+        if title_len is not None and title_len < 4:
+            raise ValueError("audio.py: Length of title must be at least 4")
+
+        if title_len is None:
+            title = self.player.title
+        else:
+            title = self.player.title[0:(title_len - 4)] + "..."
+        min_sec = divmod(self.player.duration, 60)
+        display_name = self.requester.display_name
+
+        str = "**{0}** ({1[0]}:{1[1]:02d}) - {2}".format(title, min_sec, display_name)
+        return str
+
+    def str_short(self, title_len=30):
+        return self._str_help(title_len)
+
     def __str__(self):
-        return self.player.title
+        return self._str_help()
 
 """The playlist handler holds a queue of songs that it plays. When there are no songs in the queue, 
    the handler will wait for one to arrive"""
@@ -51,7 +71,7 @@ class PlaylistHandler:
         await self.playlist.put(req)
         self.playlist_printable.append(req)
 
-        await self.bot.say("Added " + str(req) + " to the queue")
+        await self.bot.say("Added to queue: " + str(req))
 
     async def stop(self, ctx):
         channel = self.voice.channel
@@ -73,7 +93,7 @@ class PlaylistHandler:
             return
 
         self.current.player.pause()
-        await self.bot.say("Paused " + str(self.current))
+        await self.bot.say("Paused: " + str(self.current))
 
     async def resume(self, ctx):
         if self.not_playing():
@@ -81,7 +101,7 @@ class PlaylistHandler:
             return
 
         self.current.player.resume()
-        await self.bot.say("Resumed " + str(self.current))
+        await self.bot.say("Resumed: " + str(self.current))
 
     async def volume(self, ctx, vol):
         self.vol = float(vol) / 100
@@ -92,11 +112,22 @@ class PlaylistHandler:
 
     async def queue(self, ctx):
         queue_str = ""
-        num_iter = min(10, len(self.playlist_printable))
-        for i in range(num_iter):
-            queue_str += "**{}. {}**\n".format(i + 1, self.playlist_printable[i])
 
-        em = discord.Embed(title="Poppy's Playlist", description=queue_str, color=discord.Color.dark_purple())
+        if len(self.playlist_printable) > 0:
+            num_iter = min(10, len(self.playlist_printable))
+            for i in range(num_iter):
+                queue_str += "**{}.** {}\n".format(i + 1, self.playlist_printable[i].str_short())
+        else:
+            queue_str += "There are no pending songs in the playlist. Try adding songs with !play <url>"
+
+        print(ctx.message.author.avatar_url)
+
+        em = discord.Embed(title="Poppy's Playlist",
+                           description=queue_str,
+                           icon_url=ctx.message.author.avatar_url,
+                           color=discord.Color.dark_purple())
+        em.set_thumbnail(url="https://d30y9cdsu7xlg0.cloudfront.net/png/9538-200.png")
+
         await self.bot.say(embed=em)
 
     def not_playing(self):
@@ -112,7 +143,7 @@ class PlaylistHandler:
             self.next_flag.clear()
             self.current = await self.playlist.get()
             self.current.player.volume = self.vol
-            await self.bot.send_message(self.current.channel, "Now playing " + str(self.current))
+            await self.bot.send_message(self.current.channel, "Now playing: " + str(self.current))
             self.current.player.start()
             del self.playlist_printable[0]
             await self.next_flag.wait()

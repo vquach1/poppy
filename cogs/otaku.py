@@ -25,8 +25,11 @@ class OtakuCog:
         self.mal = Mal(self.bot.settings.mal_user, self.bot.settings.mal_pass)
 
     """Create a discord.Embed with info about the anime"""
-    def _create_embed_anime(self, anime):
-        em = discord.Embed(title=anime.title, url=anime.link, color=discord.Color.green())
+    def _create_embed_anime(self, ctx, anime):
+        em = discord.Embed(title=anime.title,
+                           url=anime.link,
+                           icon_url=ctx.message.author.avatar_url,
+                           color=discord.Color.green())
         em.set_thumbnail(url=anime.image)
         em.add_field(name="Synopsis", value=anime.truncate_synopsis(), inline=False)
         em.add_field(name="Episodes", value=anime.episodes, inline=True)
@@ -35,8 +38,11 @@ class OtakuCog:
         return em
 
     """Create a discord.Embed with info about the manga"""
-    def _create_embed_manga(self, manga):
-        em = discord.Embed(title=manga.title, url=manga.link, color=discord.Color.green())
+    def _create_embed_manga(self, ctx, manga):
+        em = discord.Embed(title=manga.title,
+                           url=manga.link,
+                           icon_url=ctx.message.author.avatar_url,
+                           color=discord.Color.green())
         em.set_thumbnail(url=manga.image)
         em.add_field(name="Synopsis", value=manga.truncate_synopsis(), inline=False)
         em.add_field(name="Chapters", value=manga.chapters, inline=True)
@@ -58,7 +64,7 @@ class OtakuCog:
             return
 
         """If result found, create an embed and display formatted result"""
-        em = self._create_embed_anime(anime)
+        em = self._create_embed_anime(ctx, anime)
         temp_cache_anime[name] = em
         await self.bot.say(embed=em)
 
@@ -73,7 +79,7 @@ class OtakuCog:
             await self.bot.say(":confounded: No results found. Try rephrasing the name")
             return
 
-        em = self._create_embed_manga(manga)
+        em = self._create_embed_manga(ctx, manga)
         temp_cache_manga[name] = em
         await self.bot.say(embed=em)
 
