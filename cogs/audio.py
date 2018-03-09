@@ -182,12 +182,12 @@ class PlaylistHandler:
                 req_pretty = self.playlist_printable[i].pretty_print(max_len=TRUNCATED_REQ_MAX_LEN)
                 queue_str += "**{}.** {}\n".format(i + 1, req_pretty)
         else:
-            queue_str += "There are no pending songs in the playlist. Try adding songs with !play <url>"
+            queue_str += "There are no pending songs in the playlist. Try adding songs with **!play <url>**"
 
         em = discord.Embed(description=queue_str,
                            color=discord.Color.dark_purple())
         em.set_thumbnail(url="https://d30y9cdsu7xlg0.cloudfront.net/png/9538-200.png")
-        em.set_author(name="Poppy's Playlist", icon_url=ctx.message.author.avatar_url)
+        em.set_author(name="Poppi's Playlist", icon_url=ctx.message.author.avatar_url)
         em.add_field(name="Playlist Duration", value=format_time(self.queue_duration), inline=True)
         em.add_field(name="Playlist Size", value=len(self.playlist_printable), inline=True)
 
@@ -274,9 +274,9 @@ class AudioCog:
     @commands.command(pass_context=True)
     async def play(self, ctx, url):
         handler = self._get_handler(ctx.message.server)
-        await handler.play(ctx, url)
-        """
+        #await handler.play(ctx, url)
         await handler.play(ctx, "https://www.youtube.com/watch?v=CjIkPZiqiUQ")
+        """
         await handler.play(ctx, "https://www.youtube.com/watch?v=CaksNlNniis")
         await handler.play(ctx, "https://www.youtube.com/watch?v=3SDBTVcBUVs")
         await handler.play(ctx, "https://www.youtube.com/watch?v=zyk-Q7gzGqs")

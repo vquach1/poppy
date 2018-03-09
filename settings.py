@@ -28,3 +28,11 @@ class Settings:
     @property
     def mal_pass(self):
         return self.settings["MyAnimeList"]["Pass"]
+
+    @property
+    def reddit_client_id(self):
+        return self.settings["Reddit"]["Client-ID"]
+
+    @property
+    def reddit_client_secret(self):
+        return self.settings["Reddit"]["Client-Secret"]

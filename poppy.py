@@ -25,6 +25,7 @@ async def on_ready():
     bot.load_extension("cogs.audio")
     print("Poppy is online!")
 
+"""
 @bot.event
 async def on_command_error(error, ctx):
     channel = ctx.message.channel
@@ -38,7 +39,8 @@ async def on_command_error(error, ctx):
     elif isinstance(error, NotPlayingSong):
         await bot.send_message(channel, ":confounded: I am not playing any song!")
     else:
-        await bot.send_message(channel, "Error unhandled")
+        await bot.send_message(channel, ":confounded: Error unhandled")
+"""
 
 bot.settings = Settings()
 bot.run(bot.settings.token)
