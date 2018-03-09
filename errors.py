@@ -9,3 +9,6 @@ class NotInVoiceChannel(commands.CheckFailure):
 
 class UserNotInVoiceChannel(commands.CheckFailure):
     pass
+
+class NotPlayingSong(commands.CheckFailure):
+    pass

@@ -25,20 +25,20 @@ async def on_ready():
     bot.load_extension("cogs.audio")
     print("Poppy is online!")
 
-"""
 @bot.event
 async def on_command_error(error, ctx):
     channel = ctx.message.channel
 
     if isinstance(error, NotOwner):
-        await bot.send_message(channel, "You are not an owner!")
+        await bot.send_message(channel, ":confounded: You are not an owner!")
     elif isinstance(error, NotInVoiceChannel):
-        await bot.send_message(channel, "I am not in a voice channel!")
+        await bot.send_message(channel, ":confounded: I am not in a voice channel!")
     elif isinstance(error, UserNotInVoiceChannel):
-        await bot.send_message(channel, "You are not in a voice channel!")
+        await bot.send_message(channel, ":confounded: You are not in a voice channel!")
+    elif isinstance(error, NotPlayingSong):
+        await bot.send_message(channel, ":confounded: I am not playing any song!")
     else:
         await bot.send_message(channel, "Error unhandled")
-"""
 
 bot.settings = Settings()
 bot.run(bot.settings.token)

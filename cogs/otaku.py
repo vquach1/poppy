@@ -26,10 +26,8 @@ class OtakuCog:
 
     """Create a discord.Embed with info about the anime"""
     def _create_embed_anime(self, ctx, anime):
-        em = discord.Embed(title=anime.title,
-                           url=anime.link,
-                           icon_url=ctx.message.author.avatar_url,
-                           color=discord.Color.green())
+        em = discord.Embed(color=discord.Color.green())
+        em.set_author(name=anime.title, icon_url=ctx.message.author.avatar_url, url=anime.link)
         em.set_thumbnail(url=anime.image)
         em.add_field(name="Synopsis", value=anime.truncate_synopsis(), inline=False)
         em.add_field(name="Episodes", value=anime.episodes, inline=True)
@@ -39,10 +37,8 @@ class OtakuCog:
 
     """Create a discord.Embed with info about the manga"""
     def _create_embed_manga(self, ctx, manga):
-        em = discord.Embed(title=manga.title,
-                           url=manga.link,
-                           icon_url=ctx.message.author.avatar_url,
-                           color=discord.Color.green())
+        em = discord.Embed(color=discord.Color.blue())
+        em.set_author(name=manga.title, icon_url=ctx.message.author.avatar_url, url=manga.link)
         em.set_thumbnail(url=manga.image)
         em.add_field(name="Synopsis", value=manga.truncate_synopsis(), inline=False)
         em.add_field(name="Chapters", value=manga.chapters, inline=True)
