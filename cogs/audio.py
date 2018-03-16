@@ -20,10 +20,10 @@ def format_time(sec):
 
 
 class AudioRequest:
-    def __init__(self, ctx, url, player):
+    def __init__(self, ctx, song, player):
         self.requester = ctx.message.author
         self.channel = ctx.message.channel
-        self.url = url
+        self.song = song
         self.player = player
         self.start_time = None
 
@@ -74,8 +74,9 @@ class AudioRequest:
    the handler will wait for one to arrive"""
 
 class PlaylistHandler:
-    def __init__(self, bot):
+    def __init__(self, bot, ytdl_opts):
         self.bot = bot
+        self.ytdl_opts = ytdl_opts
         self.voice = None
         self.current = None
         self.playlist_lock = asyncio.Lock()
@@ -97,13 +98,13 @@ class PlaylistHandler:
 
         await self.bot.say("I am now in " + channel.name)
 
-    async def play(self, ctx, url):
+    async def play(self, ctx, song):
         """If bot not in channel, add bot to user's voice channel"""
         if self.voice is None:
             await self.join(ctx)
 
-        player = await self.voice.create_ytdl_player(url, after=self.play_next)
-        req = AudioRequest(ctx, url, player)
+        player = await self.voice.create_ytdl_player(song, ytdl_options=self.ytdl_opts, after=self.play_next)
+        req = AudioRequest(ctx, song, player)
 
         await self.playlist_lock.acquire()
         await self.playlist.put(req)
@@ -188,7 +189,7 @@ class PlaylistHandler:
                 req_pretty = self.playlist_printable[i].pretty_print(max_len=TRUNCATED_REQ_MAX_LEN)
                 queue_str += "**{}.** {}\n".format(i + 1, req_pretty)
         else:
-            queue_str += "There are no pending songs in the playlist. Try adding songs with **!play <url>**"
+            queue_str += "There are no pending songs in the playlist. Try adding songs with **!play <url/song>**"
 
         em = discord.Embed(description=queue_str,
                            color=discord.Color.dark_purple())
@@ -235,7 +236,6 @@ class PlaylistHandler:
             self.next_flag.clear()
 
             # Pull out next song from playlist, and start playing it
-
             print("Waiting to get next song")
             self.current = await self.playlist.get()
             print("Grabbed next song")
@@ -255,13 +255,15 @@ class AudioCog:
     def __init__(self, bot):
         self.bot = bot
         self.handlers = {}
+        self.ytdl_opts = {
+            'default_search': 'auto',   # When user provides song title, will search title on youtube
+        }
 
-    """TODO"""
     def _get_handler(self, server):
         if server.id in self.handlers:
             return self.handlers[server.id]
         else:
-            handler = PlaylistHandler(self.bot)
+            handler = PlaylistHandler(self.bot, self.ytdl_opts)
             self.handlers[server.id] = handler
             return handler
 
@@ -277,11 +279,10 @@ class AudioCog:
         await handler.stop(ctx)
 
     @commands.command(pass_context=True)
-    async def play(self, ctx, url):
+    async def play(self, ctx, *, song):
         handler = self._get_handler(ctx.message.server)
-        #await handler.play(ctx, "https://www.youtube.com/watch?v=kTlv5_Bs8aw")
 
-        await handler.play(ctx, url)
+        await handler.play(ctx, song)
         """
         await handler.play(ctx, "https://www.youtube.com/watch?v=CjIkPZiqiUQ")
         await handler.play(ctx, "https://www.youtube.com/watch?v=CaksNlNniis")

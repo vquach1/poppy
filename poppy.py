@@ -8,6 +8,7 @@ import requests
 from bs4 import *
 import html
 import re
+from message_easter_eggs import *
 
 
 """After more structure has been added, this will be refactored into a class definition"""
@@ -18,12 +19,18 @@ bot = commands.Bot(command_prefix='!',
 
 @bot.event
 async def on_ready():
+    bot.msg_easter_eggs = MessageEasterEggs(bot)
     bot.load_extension("cogs.dev")
     bot.load_extension("cogs.management")
     bot.load_extension("cogs.misc")
     bot.load_extension("cogs.otaku")
     bot.load_extension("cogs.audio")
     print("Poppy is online!")
+
+@bot.event
+async def on_message(msg):
+    await bot.msg_easter_eggs.process_eggs(msg)
+    await bot.process_commands(msg)
 
 """
 @bot.event

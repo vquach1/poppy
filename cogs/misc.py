@@ -5,6 +5,7 @@ import requests
 import urllib
 import json
 import praw
+import prawcore
 import os
 import re
 from pprint import pprint
@@ -14,26 +15,22 @@ parentdir = os.path.abspath(os.path.join(dir, os.pardir))
 url_cache_dir = parentdir + "/url_cache"
 resources_dir = parentdir + "/resources"
 
-class UtilsCog:
+MAX_NUM_SUBREDDITS = 15
+
+"""TODO: Change default_meme_sources to use subreddit objects instead of strings"""
+
+class MiscCog:
+    default_meme_sources = ["Animemes", "anime_irl"]
+
     def __init__(self, bot):
         self.bot = bot
+        self.meme_sources = {}
 
         reddit_client_id = self.bot.settings.reddit_client_id
         reddit_client_secret = self.bot.settings.reddit_client_secret
         self.reddit = praw.Reddit(user_agent="windows:poppidiscordbot:v0.3 (by /u/Ocarina1493)",
                                   client_id=reddit_client_id,
                                   client_secret=reddit_client_secret)
-
-    @commands.command()
-    async def ayy(self):
-        msgA = ''
-        msgB = ''
-        for x in range(randint(0, 4) + 1):
-            msgA += chr(32 * randint(0, 1) + 65)
-        for x in range(randint(0, 4) + 1):
-            msgB += chr(32 * randint(0, 1) + 79)
-
-        await self.bot.say('lm' + msgA + msgB + '!')
 
     @commands.command(name="8ball", pass_context=True)
     async def ball8(self, ctx, *, msg):
@@ -43,43 +40,91 @@ class UtilsCog:
         conv = json.loads(result.text)
         await self.bot.say(":eye_in_speech_bubble: " + conv["magic"]["answer"])
 
-    """TODO: 
-        -Refactor into a cache handler
-        -Handle youtube, imgur, etc
-        -Make it more robust with error handling/try catch"""
-
-    @commands.command(pass_context=True)
+    @commands.group(pass_context=True)
     async def meme(self, ctx):
-        sub = self.reddit.subreddit("Animemes")
-        post = sub.random()
+        server_id = ctx.message.server.id
+        if server_id not in self.meme_sources:
+            self.meme_sources[server_id] = list(MiscCog.default_meme_sources)
 
-        contents = requests.get(post.url).content
-        print(post.url)
-        print(post.title)
+        if ctx.invoked_subcommand is None:
+            sources = self.meme_sources[server_id]
+            if len(sources) == 0:
+                await self.bot.say("There are no subreddits to choose from")
+                return
 
-        try:
-            match = re.search(r'(?<=i.redd.it/)([^\.]+).(.+)', post.url)
-            name = match.group(1)
-            ext = match.group(2)
-            filename = name + "." + ext
-            path = "{}/{}".format(dir, filename)
+            sub_name = sources[randint(0, len(sources) - 1)]
+            sub = self.reddit.subreddit(sub_name)
+            post = sub.random()
 
-            f = open(path, "wb")
-            f.write(contents)
-            f.close()
+            contents = requests.get(post.url).content
+            print(post.url)
+            print(post.title)
 
-            f = open(path, "rb")
-            await self.bot.send_file(ctx.message.channel, f)
-            f.close()
+            em = discord.Embed(title=sub_name,
+                               color=discord.Color.dark_grey(),
+                               url=post.url,
+                               description="**{}**".format(post.title))
 
-            # For now, we remove the file after we're done with it
-            os.remove(path)
-        except:
-            """TEMPORARY: Sends a default image if the random submission is something that hasn't been handled"""
-            path = resources_dir + "/default_meme.jpg"
-            f = open(path, "rb")
-            await self.bot.send_file(ctx.message.channel, f)
-            f.close()
+            if "imgur" in post.url and "gifv" not in post.url:
+                image_url = post.url + ".png"
+            else:
+                image_url = post.url
+            em.set_image(url=image_url)
+
+            em.set_footer(text=post.url,
+                          icon_url="https://www.redditstatic.com/desktop2x/img/favicon/apple-icon-57x57.png")
+            await self.bot.say(embed=em)
+
+    @meme.command(name="source", aliases=["sources"], pass_context=True)
+    async def meme_source(self, ctx):
+        server_id = ctx.message.server.id
+        sources = self.meme_sources[server_id]
+
+        if len(sources) == 0:
+            sources_str = "There are no subreddits to pull memes from"
+        else:
+            sources_str = ""
+            for idx, src in enumerate(sources):
+                sources_str += "**{0}. {1}**\n".format(idx + 1, src)
+
+        em = discord.Embed(description=sources_str,
+                           color=discord.Color.dark_purple())
+        em.set_author(name="Reddit Meme Sources", icon_url=ctx.message.author.avatar_url)
+
+        await self.bot.say(embed=em)
+
+    @meme.command(name="add", pass_context=True)
+    async def meme_add(self, ctx, *subreddits):
+        server_id = ctx.message.server.id
+        sources = self.meme_sources[server_id]
+
+        for sub_name in subreddits:
+            if len(sources) == MAX_NUM_SUBREDDITS:
+                await self.bot.say("You can only pull from a maximum of {} subreddits".format(MAX_NUM_SUBREDDITS))
+                return
+
+            if sub_name in sources:
+                await self.bot.say(sub_name + " is already in the list of subreddits")
+                continue
+
+            try:
+                sub = self.reddit.subreddits.search_by_name(sub_name, exact=True)
+                sources.append(sub_name)
+                await self.bot.say("Added {} to the list of meme sources".format(sub_name))
+            except prawcore.NotFound:
+                await self.bot.say(sub_name + " does not exist or is not public")
+
+    @meme.command(name="remove", pass_context=True)
+    async def meme_remove(self, ctx, *subreddits):
+        server_id = ctx.message.server.id
+        sources = self.meme_sources[server_id]
+
+        for sub_name in subreddits:
+            if sub_name not in sources:
+                await self.bot.say(sub_name + " is not in the list of subreddits")
+            else:
+                sources.remove(sub_name)
+                await self.bot.say(sub_name + " has been removed from the list of subreddits")
 
     @commands.command(pass_context=True)
     async def dance(self, ctx):
@@ -94,4 +139,4 @@ class UtilsCog:
 
 
 def setup(bot):
-    bot.add_cog(UtilsCog(bot))
+    bot.add_cog(MiscCog(bot))
