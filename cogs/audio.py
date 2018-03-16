@@ -5,11 +5,14 @@ from pprint import pprint
 from random import shuffle
 import asyncio
 import datetime
+import json
+import os
 
 "Adapted from https://github.com/Rapptz/discord.py/blob/async/examples/playlist.py"
 
 TRUNCATED_REQ_MIN_LEN = 50
 TRUNCATED_REQ_MAX_LEN = 60
+dir = os.path.dirname(__file__)
 
 def format_time(sec):
     min_sec = divmod(sec, 60)
@@ -158,12 +161,15 @@ class PlaylistHandler:
 
         print("Skip Current: " + str(self.current))
 
-    async def volume(self, ctx, vol):
-        self.vol = float(vol) / 100
-        if self.current is not None:
-            self.current.player.volume = self.vol
+    async def volume(self, ctx, vol=None):
+        if vol is None:
+            await self.bot.say("The curent volume is {}%".format(int(self.vol * 100)))
+        else:
+            self.vol = float(vol) / 100
+            if self.current is not None:
+                self.current.player.volume = self.vol
 
-        await self.bot.say("Set the volume to {}%".format(vol))
+            await self.bot.say("Set the volume to {}%".format(vol))
 
     async def playing(self, ctx):
         if self.not_playing():
@@ -245,7 +251,6 @@ class PlaylistHandler:
             print("Waiting for song to end")
             await self.next_flag.wait()
 
-
 class AudioCog:
     def __init__(self, bot):
         self.bot = bot
@@ -274,9 +279,11 @@ class AudioCog:
     @commands.command(pass_context=True)
     async def play(self, ctx, url):
         handler = self._get_handler(ctx.message.server)
-        #await handler.play(ctx, url)
-        await handler.play(ctx, "https://www.youtube.com/watch?v=CjIkPZiqiUQ")
+        #await handler.play(ctx, "https://www.youtube.com/watch?v=kTlv5_Bs8aw")
+
+        await handler.play(ctx, url)
         """
+        await handler.play(ctx, "https://www.youtube.com/watch?v=CjIkPZiqiUQ")
         await handler.play(ctx, "https://www.youtube.com/watch?v=CaksNlNniis")
         await handler.play(ctx, "https://www.youtube.com/watch?v=3SDBTVcBUVs")
         await handler.play(ctx, "https://www.youtube.com/watch?v=zyk-Q7gzGqs")
@@ -304,7 +311,7 @@ class AudioCog:
         await handler.skip(ctx)
 
     @commands.command(pass_context=True)
-    async def volume(self, ctx, vol):
+    async def volume(self, ctx, vol=None):
         handler = self._get_handler(ctx.message.server)
         await handler.volume(ctx, vol)
 
