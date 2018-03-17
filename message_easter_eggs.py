@@ -1,6 +1,6 @@
 from random import randint
 import datetime
-
+import re
 
 class MessageEasterEggs:
     def __init__(self, bot):
@@ -16,7 +16,7 @@ class MessageEasterEggs:
 
     """Whenever 'ayy' is present within a message, the bot will respond with 'lmao'"""
     async def ayy(self, msg):
-        if "ayy" not in msg.content:
+        if not bool(re.search("(a|A)(y|Y){2}", msg.content)):
             return
 
         aRep = ''

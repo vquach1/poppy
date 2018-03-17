@@ -20,9 +20,9 @@ def format_time(sec):
 
 
 class AudioRequest:
-    def __init__(self, ctx, song, player):
-        self.requester = ctx.message.author
-        self.channel = ctx.message.channel
+    def __init__(self, requester, channel, song, player):
+        self.requester = requester
+        self.channel = channel
         self.song = song
         self.player = player
         self.start_time = None
@@ -79,6 +79,7 @@ class PlaylistHandler:
         self.ytdl_opts = ytdl_opts
         self.voice = None
         self.current = None
+        self.looping = False
         self.playlist_lock = asyncio.Lock()
         self.next_flag = asyncio.Event()
         self.playlist = asyncio.Queue() # Use this queue to process songs with nonblocking gets
@@ -104,7 +105,7 @@ class PlaylistHandler:
             await self.join(ctx)
 
         player = await self.voice.create_ytdl_player(song, ytdl_options=self.ytdl_opts, after=self.play_next)
-        req = AudioRequest(ctx, song, player)
+        req = AudioRequest(ctx.message.author, ctx.message.channel, song, player)
 
         await self.playlist_lock.acquire()
         await self.playlist.put(req)
@@ -160,7 +161,13 @@ class PlaylistHandler:
 
         self.playlist_lock.release()
 
-        print("Skip Current: " + str(self.current))
+    async def loop(self, ctx, mode):
+        if mode == "" or mode == "on":
+            self.looping = True
+            await self.bot.say("Looping enabled!")
+        elif mode == "off":
+            self.looping = False
+            await self.bot.say("Looping disabled!")
 
     async def volume(self, ctx, vol=None):
         if vol is None:
@@ -222,8 +229,6 @@ class PlaylistHandler:
         self.playlist_lock.release()
 
     def not_playing(self):
-        print("Voice: " + str(self.voice))
-        print("Current: " + str(self.current))
         return self.voice is None or \
                self.current is None or \
                self.current.player.is_done()
@@ -236,20 +241,30 @@ class PlaylistHandler:
             self.next_flag.clear()
 
             # Pull out next song from playlist, and start playing it
-            print("Waiting to get next song")
-            self.current = await self.playlist.get()
-            print("Grabbed next song")
+            print("Retrieving next song")
+            if self.looping and self.current is not None:
+                print("In looping mode")
+                player = await self.voice.create_ytdl_player(self.current.song,
+                                                             ytdl_options=self.ytdl_opts,
+                                                             after=self.play_next)
+                self.current = AudioRequest(self.current.requester,
+                                            self.current.channel,
+                                            self.current.song,
+                                            player)
+            else:
+                print("In next get mode")
+                self.current = await self.playlist.get()
+                await self.playlist_lock.acquire()
+                self.queue_duration -= self.current.player.duration
+                del self.playlist_printable[0]
+                self.playlist_lock.release()
+
+            print("Got a song")
+
             self.current.start_song(self.vol)
-            print("Song started")
             await self.bot.send_message(self.current.channel, "Now playing: " + str(self.current))
-
-            await self.playlist_lock.acquire()
-            self.queue_duration -= self.current.player.duration
-            del self.playlist_printable[0]
-            self.playlist_lock.release()
-
-            print("Waiting for song to end")
             await self.next_flag.wait()
+            print("Got past the wait")
 
 class AudioCog:
     def __init__(self, bot):
@@ -310,6 +325,11 @@ class AudioCog:
     async def skip(self, ctx):
         handler = self._get_handler(ctx.message.server)
         await handler.skip(ctx)
+
+    @commands.command(pass_context=True)
+    async def loop(self, ctx, mode=""):
+        handler = self._get_handler(ctx.message.server)
+        await handler.loop(ctx, mode)
 
     @commands.command(pass_context=True)
     async def volume(self, ctx, vol=None):

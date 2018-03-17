@@ -1,5 +1,8 @@
 import discord
 from discord.ext import commands
+from discord.object import Object
+from discord.errors import InvalidArgument, ClientException
+from discord.enums import ChannelType
 from errors import *
 from settings import Settings
 from base64 import b64encode
@@ -8,14 +11,18 @@ import requests
 from bs4 import *
 import html
 import re
+import asyncio
 from message_easter_eggs import *
 
+"""Right now, Bot is just a carbon copy of commands.Bot. Will add changes in the future"""
 
-"""After more structure has been added, this will be refactored into a class definition"""
+class Bot(commands.Bot):
+    def __init__(self, command_prefix, formatter=None, description=None, pm_help=False, **options):
+        super().__init__(command_prefix, formatter, description, pm_help, **options)
 
-bot = commands.Bot(command_prefix='!',
-                   description='Poppy is a personalized Discord chat bot for anime, manga, games, and more!')
 
+bot = Bot(command_prefix='!',
+          description='Poppy is a personalized Discord chat bot for anime, manga, games, and more!')
 
 @bot.event
 async def on_ready():
