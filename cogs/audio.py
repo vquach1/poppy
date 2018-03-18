@@ -26,9 +26,11 @@ class AudioRequest:
         self.song = song
         self.player = player
         self.start_time = None
+        self.iterations = 0
 
     def start_song(self, vol):
-        self.player.volume = vol
+        self.iterations += 1
+        self.player.volume = vol / 100.0
         self.player.start()
         self.start_time = datetime.datetime.now()
 
@@ -47,13 +49,13 @@ class AudioRequest:
 
         name = self.requester.display_name
 
-        """Display either Duration or Progress/Duration"""
+        # Display either Duration or Progress/Duration
         time = format_time(self.player.duration)
         if show_progress:
             progress = format_time(self.progress())
             time = "{0}/{1}".format(progress, time)
 
-        """Truncate title if necessary"""
+        # Truncate title if necessary
         if max_len is None:
             title = self.player.title
         else:
@@ -64,7 +66,10 @@ class AudioRequest:
             else:
                 title = self.player.title[0:(rem_len - 4)] + "..."
 
-        pretty = "**{0}** ({1}) - {2}".format(title, time, name)
+        # Display iterations if they're over 1
+        iters = " [{0} times]".format(self.iterations) if self.iterations > 1 else ""
+
+        pretty = "**{0}** ({1}) - {2}{3}".format(title, time, name, iters)
         return pretty
 
     def __str__(self):
@@ -84,13 +89,18 @@ class PlaylistHandler:
         self.next_flag = asyncio.Event()
         self.playlist = asyncio.Queue() # Use this queue to process songs with nonblocking gets
         self.playlist_printable = []    # Use this list to examine/mix queue contents with min disruption
-        self.vol = 0.2   # The default volume that is used in all songs
+        self.vol = 20   # The default volume that is used in all songs
+        self.max_vol = 50
         self.queue_duration = 0
         self.playlist_task = self.bot.loop.create_task(self.process_playlist())
 
     async def join(self, ctx, channel=None):
         if channel is None:
             channel = ctx.message.author.voice.voice_channel
+
+        # We have to recreate the task if it was previously canceled (e.g. through !stop)
+        if self.playlist_task is None:
+            self.playlist_task = self.bot.loop.create_task(self.process_playlist())
 
         if self.voice is None:
             self.voice = await self.bot.join_voice_channel(channel)
@@ -120,16 +130,17 @@ class PlaylistHandler:
 
         await self.playlist_lock.acquire()
 
-        """Cancel playlist processing and disconnect the voice client"""
+        # Cancel playlist processing and disconnect the voice client"""
         self.playlist_task.cancel()
+        self.playlist_task = None
         await self.voice.disconnect()
         self.voice = None
 
-        """Reset the playlist"""
-        del self.playlist
-        del self.playlist_printable
+        # Reset the playlist
         self.playlist = asyncio.Queue()
         self.playlist_printable = []
+        self.current = None
+        self.next_flag.set()
 
         await self.bot.say("I am no longer in " + channel.name)
         self.playlist_lock.release()
@@ -153,12 +164,14 @@ class PlaylistHandler:
             raise NotPlayingSong()
 
         await self.playlist_lock.acquire()
-        self.current.player.stop()
+        req_str = str(self.current)
 
-        # If this isn't here, skipping will not pull up the next song if player is paused
+        # Need to call both of these to set flags in the player that let it know to stop
         self.current.player.resume()
-        await self.bot.say("Skipped: " + str(self.current))
+        self.current.player.stop()
+        self.current = None
 
+        await self.bot.say("Skipped: " + req_str)
         self.playlist_lock.release()
 
     async def loop(self, ctx, mode):
@@ -171,13 +184,30 @@ class PlaylistHandler:
 
     async def volume(self, ctx, vol=None):
         if vol is None:
-            await self.bot.say("The curent volume is {}%".format(int(self.vol * 100)))
-        else:
-            self.vol = float(vol) / 100
-            if self.current is not None:
-                self.current.player.volume = self.vol
+            await self.bot.say("The current volume is {0}%".format(self.vol))
+            return
 
-            await self.bot.say("Set the volume to {}%".format(vol))
+        # The volume cannot go above the specified max
+        if int(vol) <= self.max_vol:
+            self.vol = int(vol)
+            await self.bot.say("Set the volume to {0}%".format(self.vol))
+        else:
+            self.vol = self.max_vol
+            await self.bot.say(("Set the volume to the max of {0}%. " +
+                                "Change the max volume through **!maxvolume <vol>**").format(self.vol))
+
+        if self.current is not None:
+            self.current.player.volume = self.vol / 100.0
+
+    async def maxvolume(self, ctx, vol=None):
+        if vol is None:
+            await self.bot.say("The max volume allowed is {0}%".format(self.max_vol))
+            return
+
+        self.max_vol = int(vol)
+        await self.bot.say("Set the max volume to {0}%".format(self.max_vol))
+        if self.max_vol < self.vol:
+            await self.volume(ctx, self.max_vol)
 
     async def playing(self, ctx):
         if self.not_playing():
@@ -189,7 +219,7 @@ class PlaylistHandler:
     async def queue(self, ctx):
         queue_str = ""
 
-        """Add queue songs"""
+        # Formats queue songs into a list
         if len(self.playlist_printable) > 0:
             num_iter = min(10, len(self.playlist_printable))
             for i in range(num_iter):
@@ -202,15 +232,21 @@ class PlaylistHandler:
                            color=discord.Color.dark_purple())
         em.set_thumbnail(url="https://d30y9cdsu7xlg0.cloudfront.net/png/9538-200.png")
         em.set_author(name="Poppi's Playlist", icon_url=ctx.message.author.avatar_url)
+
+        # Display playlist statistics
         em.add_field(name="Playlist Duration", value=format_time(self.queue_duration), inline=True)
         em.add_field(name="Playlist Size", value=len(self.playlist_printable), inline=True)
 
-        """Display current song, if one exists"""
+        # Display current song, if one exists
         if self.not_playing():
             curr_req_pretty = "Nothing"
         else:
             curr_req_pretty = self.current.pretty_print(max_len=TRUNCATED_REQ_MAX_LEN, show_progress=True)
         em.add_field(name="Currently Playing", value=curr_req_pretty, inline=False)
+
+        # Display looping status
+        looping_str = "On" if self.looping else "Off"
+        em.add_field(name="Looping", value=looping_str, inline=False)
 
         await self.bot.say(embed=em)
 
@@ -240,19 +276,14 @@ class PlaylistHandler:
         while True:
             self.next_flag.clear()
 
+            print("Pulling out next song")
             # Pull out next song from playlist, and start playing it
-            print("Retrieving next song")
-            if self.looping and self.current is not None:
-                print("In looping mode")
+            if self.looping and self.current is not None :
                 player = await self.voice.create_ytdl_player(self.current.song,
                                                              ytdl_options=self.ytdl_opts,
                                                              after=self.play_next)
-                self.current = AudioRequest(self.current.requester,
-                                            self.current.channel,
-                                            self.current.song,
-                                            player)
+                self.current.player = player
             else:
-                print("In next get mode")
                 self.current = await self.playlist.get()
                 await self.playlist_lock.acquire()
                 self.queue_duration -= self.current.player.duration
@@ -262,9 +293,9 @@ class PlaylistHandler:
             print("Got a song")
 
             self.current.start_song(self.vol)
+            print("Started song")
             await self.bot.send_message(self.current.channel, "Now playing: " + str(self.current))
             await self.next_flag.wait()
-            print("Got past the wait")
 
 class AudioCog:
     def __init__(self, bot):
@@ -331,10 +362,15 @@ class AudioCog:
         handler = self._get_handler(ctx.message.server)
         await handler.loop(ctx, mode)
 
-    @commands.command(pass_context=True)
+    @commands.command(aliases=["vol"], pass_context=True)
     async def volume(self, ctx, vol=None):
         handler = self._get_handler(ctx.message.server)
         await handler.volume(ctx, vol)
+
+    @commands.command(aliases=["maxvol"], pass_context=True)
+    async def maxvolume(self, ctx, vol=None):
+        handler = self._get_handler(ctx.message.server)
+        await handler.maxvolume(ctx, vol)
 
     @commands.command(aliases=["current", "song"], pass_context=True)
     async def playing(self, ctx):

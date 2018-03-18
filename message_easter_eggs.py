@@ -26,7 +26,7 @@ class MessageEasterEggs:
         for x in range(randint(1, 5)):
             oRep += chr(32 * randint(0, 1) + 79)
 
-        res = "lm{0}{1}!".format(aRep, oRep)
+        res = "**lm{0}{1}!**".format(aRep, oRep)
 
         await self.bot.send_message(msg.channel, res)
 
@@ -40,7 +40,7 @@ class MessageEasterEggs:
         for y in range(randint(10, 40)):
             eRep += chr(32 * randint(0, 1) + 69)
 
-        res = "{0}{1}".format(rChar, eRep)
+        res = "**{0}{1}**".format(rChar, eRep)
 
         await self.bot.send_message(msg.channel, res)
 
