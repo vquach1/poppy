@@ -36,3 +36,7 @@ class Settings:
     @property
     def reddit_client_secret(self):
         return self.settings["Reddit"]["Client-Secret"]
+
+    @property
+    def league_api_key(self):
+        return self.settings["League"]
