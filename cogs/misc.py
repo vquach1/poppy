@@ -15,6 +15,18 @@ parentdir = os.path.abspath(os.path.join(dir, os.pardir))
 url_cache_dir = parentdir + "/url_cache"
 resources_dir = parentdir + "/resources"
 
+table_flip_collection = [
+    "(╯°□°）╯︵ ┻━┻",
+    "(┛◉Д◉)┛彡┻━┻",
+    "(ﾉ≧∇≦)ﾉ ﾐ ┸━┸",
+    "(ノಠ益ಠ)ノ彡┻━┻",
+    "(╯ರ ~ ರ）╯︵ ┻━┻",
+    "(┛ಸ_ಸ)┛彡┻━┻",
+    "(ﾉ´･ω･)ﾉ ﾐ ┸━┸",
+    "(ノಥ,_｣ಥ)ノ彡┻━┻",
+    "(┛✧Д✧))┛彡┻━┻"
+]
+
 MAX_NUM_SUBREDDITS = 15
 
 """TODO: Change default_meme_sources to use subreddit objects instead of strings"""
@@ -39,6 +51,21 @@ class MiscCog:
         result = requests.get(url)
         conv = json.loads(result.text)
         await self.bot.say(":eye_in_speech_bubble: " + conv["magic"]["answer"])
+
+    @commands.command(aliases=["coinflip"], pass_context=True)
+    async def flip(self, ctx):
+        face = "Heads" if randint(0, 1) == 0 else "Tails"
+        await self.bot.say("{0} flipped a coin, which landed on {1}".format(ctx.message.author.name, face))
+
+    @commands.command(aliases=["dice"], pass_context=True)
+    async def roll(self, ctx, faces=6):
+        face = randint(0, faces-1) + 1
+        await self.bot.say(":game_die: {0} rolled a die, which landed on {1}".format(ctx.message.author.name, face))
+
+    @commands.command(aliases=["fliptable"], pass_context=True)
+    async def tableflip(self, ctx):
+        table = table_flip_collection[randint(0, len(table_flip_collection))-1]
+        await self.bot.say(table)
 
     @commands.group(pass_context=True)
     async def meme(self, ctx):
