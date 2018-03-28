@@ -12,6 +12,9 @@ from bs4 import *
 import html
 import re
 import asyncio
+import itertools
+import inspect
+
 from message_easter_eggs import *
 
 
@@ -28,10 +31,40 @@ cogs = [
 # Path to the cogs folder
 cogs_folder = "cogs"
 
+_mentions_transforms = {
+    '@everyone': '@\u200beveryone',
+    '@here': '@\u200bhere'
+}
+
+_mention_pattern = re.compile('|'.join(_mentions_transforms.keys()))
+
 
 class Formatter(commands.HelpFormatter):
-    def format(self):
-        """TODO: Make it return an embed"""
+    def __init__(self, show_hidden=False, show_check_failure=False, width=80):
+        super().__init__(show_hidden, show_check_failure, width)
+        self.context = None
+        self.command = None
+
+    def format_help(self, ctx):
+        self.context = ctx
+        self.command = ctx.bot
+
+        bot = ctx.bot
+        description = bot.description
+
+        def category(tup):
+            cog = tup[1].cog_name
+            # We insert the zero width space there to give it approximate
+            # last place sorting position.
+            return cog + ':' if cog is not None else '\u200bNo Category:'
+
+        data = sorted(self.filter_command_list(), key=category)
+        for category, commands in itertools.groupby(data, key=category):
+            commands = list(commands)
+            print(category)
+            print(commands)
+            print("-----")
+
         em = discord.Embed(description="TODO: Format", color=discord.Color.dark_green())
         return em
 
@@ -47,6 +80,7 @@ class Bot(commands.Bot):
         # Replace the default help command with our custom help command
         self.remove_command("help")
         self.command(**self.help_attrs)(self._help_command)
+        # self.command(**self.help_attrs)(_def_help_command)
 
     async def on_ready(self):
         print("Poppi is online!")
@@ -55,6 +89,7 @@ class Bot(commands.Bot):
         await self.msg_easter_eggs.process_eggs(msg)
         await self.process_commands(msg)
 
+    """
     async def on_command_error(self, error, ctx):
         channel = ctx.message.channel
 
@@ -74,10 +109,28 @@ class Bot(commands.Bot):
             await self.send_message(channel, ":confounded: I am not playing any song!")
         else:
             await self.send_message(channel, ":confounded: Error unhandled")
+    """
 
     async def _help_command(self, ctx, *commands: str):
-        """TODO: Make it call our formatter based on the structure of the command passed"""
-        pass
+        destination = ctx.message.author if self.pm_help else ctx.message.channel
+
+        def repl(obj):
+            return _mentions_transforms.get(obj.group(0), '')
+
+        if len(commands) == 0:
+            # If 'help' is called by itself, list all of the commands
+            em = self.formatter.format_help(ctx)
+        elif len(commands) == 1:
+            # If 'help' is called with a role/command, list information for the role/command
+            name = _mention_pattern.sub(repl, commands[0])
+            command = self.commands.get(name)
+            if command is None:
+                await self.send_message(destination, self.command_not_found.format(name))
+                return
+
+            em = self.formatter.format_help_command(ctx, command)
+
+        await self.send_message(destination, embed=em)
 
     def _load_cogs(self):
         for cog in cogs:
