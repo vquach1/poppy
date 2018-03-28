@@ -27,11 +27,18 @@ table_flip_collection = [
     "(┛✧Д✧))┛彡┻━┻"
 ]
 
+table_set_collection = [
+    "┬──┬ ノ( ゜-゜ノ)",
+    "┬──┬﻿ ¯\_(ツ)",
+    "(ヘ･_･)ヘ┳━┳",
+    "ヘ(´° □°)ヘ┳━┳",
+    "┣ﾍ(≧∇≦ﾍ)… (≧∇≦)/┳━┳"
+]
+
 MAX_NUM_SUBREDDITS = 15
 
-"""TODO: Change default_meme_sources to use subreddit objects instead of strings"""
 
-class MiscCog:
+class Miscellaneous:
     default_meme_sources = ["Animemes", "anime_irl"]
 
     def __init__(self, bot):
@@ -67,11 +74,16 @@ class MiscCog:
         table = table_flip_collection[randint(0, len(table_flip_collection))-1]
         await self.bot.say(table)
 
+    @commands.command(aliases=["settable"], pass_context=True)
+    async def tableset(self, ctx):
+        table = table_set_collection[randint(0, len(table_set_collection))-1]
+        await self.bot.say(table)
+
     @commands.group(pass_context=True)
     async def meme(self, ctx):
         server_id = ctx.message.server.id
         if server_id not in self.meme_sources:
-            self.meme_sources[server_id] = list(MiscCog.default_meme_sources)
+            self.meme_sources[server_id] = list(Miscellaneous.default_meme_sources)
 
         if ctx.invoked_subcommand is None:
             sources = self.meme_sources[server_id]
@@ -166,4 +178,4 @@ class MiscCog:
 
 
 def setup(bot):
-    bot.add_cog(MiscCog(bot))
+    bot.add_cog(Miscellaneous(bot))

@@ -297,7 +297,7 @@ class PlaylistHandler:
             await self.bot.send_message(self.current.channel, "Now playing: " + str(self.current))
             await self.next_flag.wait()
 
-class AudioCog:
+class Audio:
     def __init__(self, bot):
         self.bot = bot
         self.handlers = {}
@@ -327,17 +327,7 @@ class AudioCog:
     @commands.command(pass_context=True)
     async def play(self, ctx, *, song):
         handler = self._get_handler(ctx.message.server)
-
         await handler.play(ctx, song)
-        """
-        await handler.play(ctx, "https://www.youtube.com/watch?v=CjIkPZiqiUQ")
-        await handler.play(ctx, "https://www.youtube.com/watch?v=CaksNlNniis")
-        await handler.play(ctx, "https://www.youtube.com/watch?v=3SDBTVcBUVs")
-        await handler.play(ctx, "https://www.youtube.com/watch?v=zyk-Q7gzGqs")
-        await handler.play(ctx, "https://www.youtube.com/watch?v=iWO4ff1HXYY")
-        await handler.play(ctx, "https://www.youtube.com/watch?v=CKOEvNOM4DI")
-        await handler.play(ctx, "https://www.youtube.com/watch?v=CV_2u6EDx6c")
-        """
 
     @is_in_voice_channel()
     @commands.command(pass_context=True)
@@ -389,4 +379,4 @@ class AudioCog:
 
 
 def setup(bot):
-    bot.add_cog(AudioCog(bot))
+    bot.add_cog(Audio(bot))

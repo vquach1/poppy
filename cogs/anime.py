@@ -19,7 +19,7 @@ TODO:
 temp_cache_anime = {}
 temp_cache_manga = {}
 
-class OtakuCog:
+class Anime:
     def __init__(self, bot):
         self.bot = bot
         self.mal = Mal(self.bot.settings.mal_user, self.bot.settings.mal_pass)
@@ -80,4 +80,4 @@ class OtakuCog:
         await self.bot.say(embed=em)
 
 def setup(bot):
-    bot.add_cog(OtakuCog(bot))
+    bot.add_cog(Anime(bot))

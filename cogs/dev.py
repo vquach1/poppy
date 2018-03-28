@@ -6,7 +6,7 @@ from discord.ext import commands
    Ironic."""
 
 
-class DevCog:
+class Development:
     def __init__(self, bot):
         self.bot = bot
 
@@ -35,4 +35,4 @@ class DevCog:
 
 
 def setup(bot):
-    bot.add_cog(DevCog(bot))
+    bot.add_cog(Development(bot))

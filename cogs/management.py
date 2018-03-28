@@ -3,7 +3,7 @@ from discord.ext import commands
 from checks import *
 
 
-class ManagementCog:
+class Management:
     def __init__(self, bot):
         self.bot = bot
 
@@ -38,4 +38,4 @@ class ManagementCog:
 
 
 def setup(bot):
-    bot.add_cog(ManagementCog(bot))
+    bot.add_cog(Management(bot))

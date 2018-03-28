@@ -6,7 +6,7 @@ league_icon_url = "http://2.bp.blogspot.com/-HqSOKIIV59A/U8WP4WFW28I/AAAAAAAAT5U
 dragon_base = "http://ddragon.leagueoflegends.com/cdn"
 
 
-class LeagueCog:
+class League:
     def __init__(self, bot):
         self.bot = bot
         self.summoner_ids = {} # Summoner name to ID
@@ -84,4 +84,4 @@ class LeagueCog:
 
 
 def setup(bot):
-    bot.add_cog(LeagueCog(bot))
+    bot.add_cog(League(bot))

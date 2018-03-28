@@ -23,7 +23,7 @@ cogs = [
     "dev",
     "management",
     "misc",
-    "otaku",
+    "anime",
     "audio",
     # "league"
 ]
@@ -54,18 +54,27 @@ class Formatter(commands.HelpFormatter):
 
         def category(tup):
             cog = tup[1].cog_name
-            # We insert the zero width space there to give it approximate
-            # last place sorting position.
-            return cog + ':' if cog is not None else '\u200bNo Category:'
+            return cog if cog else ""
+
+        icon_url = ctx.message.author.avatar_url
+
+        em = discord.Embed(description=description, color=discord.Color.dark_green())
+        em.set_author(name="Poppi's Command Guide", icon_url=icon_url)
+
 
         data = sorted(self.filter_command_list(), key=category)
         for category, commands in itertools.groupby(data, key=category):
+            if category == "":
+                continue
+
             commands = list(commands)
             print(category)
-            print(commands)
-            print("-----")
 
-        em = discord.Embed(description="TODO: Format", color=discord.Color.dark_green())
+            names = ["`{0}`".format(tup[0]) for tup in commands if tup[0] not in tup[1].aliases]
+            names_spaced = " ".join(names)
+
+            em.add_field(name=category, value=names_spaced, inline=False)
+
         return em
 
 
@@ -128,6 +137,7 @@ class Bot(commands.Bot):
                 await self.send_message(destination, self.command_not_found.format(name))
                 return
 
+            # TODO
             em = self.formatter.format_help_command(ctx, command)
 
         await self.send_message(destination, embed=em)
@@ -141,8 +151,11 @@ class Bot(commands.Bot):
                 print("ERROR: " + str(e))  # TODO: Replace this with logging
 
 
+des = "Poppi is a personalized Discord chat bot for anime, manga, games, and more! If you wish to learn more about a " \
+      "commmand, type in **!help <command>**"
+
 bot = Bot(command_prefix='!',
-          description='Poppy is a personalized Discord chat bot for anime, manga, games, and more!',
+          description=des,
           formatter=Formatter())
 
 bot.run(bot.settings.token)
