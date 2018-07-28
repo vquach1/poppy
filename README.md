@@ -12,7 +12,7 @@ With only the Discord token, Poppy's functions are limited. As-is, you can play 
 
 # Modules
 
-This module currently excludes 
+This section currently excludes command descriptions for Development and Management (channel administration). Development is a simple module that makes it easy to load/unload other modules. This is used to support prototyping during development. Management publically only has commands for role management. Other functions, such as kicking/banning are left off, as they can introduce security vulnerabilities if mismanaged. Future support is planned to restrict admin commands to users that have been whitelisted and/or are server moderators/admins.
 
 ## Anime
 | Command     | Arguments  | Action                           |
@@ -35,11 +35,6 @@ This module currently excludes
 | playing | N/A  | Returns information about the current video |
 | queue | N/A | Presents the contents of the playlist |
 | shuffle | N/A | Shuffles the contents of the playlist |
-
-## Management
-| Command     | Arguments  | Action                           |
-|-------------|------------|----------------------------------|
-
 
 ## Miscellaneous
 | Command     | Arguments  | Action                           |
