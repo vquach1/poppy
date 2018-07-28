@@ -19,9 +19,14 @@ With only the Discord token, Poppy's functions are limited. As-is, you can play 
 ## Management
 
 ## Miscellaneous
-| Command | Arguments | Result                           |
-|---------|-----------|----------------------------------|
-| 8ball   | Question  | Answers any query of your choice |
-| dance   | N/A       | Plays a dancing GIF              |
-| flip    | N/A       | Flips the table  (╯°□°）╯︵ ┻━┻  |
-| meme    | N/A       | Pulls memes from Reddit. Default sources are r/Animemes and r/anime_irl, though this can be changed both programatically and through the Discord chat. |
+| Command     | Arguments  | Action                           |
+|-------------|------------|----------------------------------|
+| 8ball       | Question   | Answers any query of your choice |
+| dance       | N/A        | Plays a dancing GIF              |
+| tableflip   | N/A        | Flips the table  (╯°□°）╯︵ ┻━┻  |
+| tableset    | N/A        | Sets the table                   |
+| meme        | See Action | Pulls memes from Reddit. Default sources are r/Animemes and r/anime_irl, though this can be changed both programatically and through the Discord chat. 
+-!meme add <source> To add a subreddit
+-!meme remove <source> to remove a subreddit |
+|roll         | Number     | Rolls a random value between a 1 and the given number. If no number is present, 6 is the default max |
+
