@@ -20,6 +20,11 @@ This section currently excludes command descriptions for Development and Managem
 | anime       | Name       | Presents information about the given anime |
 | manga       | Name       | Presents information about the given manga |
 
+## League
+| Command     | Arguments       | Action |
+| ----------- | ---------- | ------ |
+| league      | Summoner Name | Type in !league user <summoner_name> to display information about the account. Stats include level, rank, and top 3 played champs |
+
 ## Audio
 | Command     | Arguments  | Action                           |
 |-------------|------------|----------------------------------|
