@@ -8,7 +8,7 @@ With only the Discord token, Poppy's functions are limited. As-is, you can play 
 
 - Anime: This module relies on MyAnimeList's API, though it will eventually be switched over to the Anime API that I am developing. To enable this module, you need to supply your MyAnimeList username and password.
 - League: This module requires a League developer token. See https://developer.riotgames.com/ for generating one.
-- Meme: This module pulls content from Reddit. See https://github.com/reddit-archive/reddit/wiki/OAuth2 to obtain the necessary credentials.
+- Misc: One of the commands in this module pulls content from Reddit. See https://github.com/reddit-archive/reddit/wiki/OAuth2 to obtain the necessary credentials.
 
 # Modules
 
@@ -19,7 +19,9 @@ With only the Discord token, Poppy's functions are limited. As-is, you can play 
 ## Management
 
 ## Miscellaneous
-| Command | Arguments | Result                          |
-|---------|-----------|---------------------------------|
-| 8ball   | Question  | Answers any query of your choice|
-
+| Command | Arguments | Result                           |
+|---------|-----------|----------------------------------|
+| 8ball   | Question  | Answers any query of your choice |
+| dance   | N/A       | Plays a dancing GIF              |
+| flip    | N/A       | Flips the table  (╯°□°）╯︵ ┻━┻  |
+| meme    | N/A       | Pulls memes from Reddit. Default sources are r/Animemes and r/anime_irl, though this can be changed both programatically and through the Discord chat. |
